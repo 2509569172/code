@@ -1,0 +1,9 @@
+#include<stdio.h>
+#include<string.h>
+
+int main(){
+	char str[] = "almost every programer should know memset!";
+	memset(str,'-',6);
+	puts(str);
+	return 0;
+}
