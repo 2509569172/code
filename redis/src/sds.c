@@ -317,4 +317,64 @@ int sdsll2str(char *s,long long value){
 		
 }
 
+int sdsull2str(char *s,unsigned long long v){
+	char *p,aux;
+	size_t l;
 
+	p = s;
+	do {
+		*p++ = '0'+(v%10);
+		v /= 10;
+	} while(v);
+
+	l = p-s;
+	*p  = '\0';
+
+	p--;
+	while(s < p){
+		aux = *s;
+		*s = *p;
+		*p = aux;
+		s++;
+		p--;
+	}
+	return l;
+}
+
+sds sdsfromlonglong(long long value){
+	char buf[SDS_LLSTR_SIZE];
+	int len = sdsll2str(buf,value);
+
+	return sdsnewlen(buf,len);
+}
+
+sds sdscatvprintf(sds s,const char *fmt,va_list ap){
+	va_list cpy;
+	char staticbuf[1024],*buf = staticbuf,*t;
+	size_t buflen = strlen(fmt)*2;
+
+	if(buflen > sizeof(staticbuf)){
+		buf = s_malloc(buflen);
+		if(buf == NULL) return NULL;
+	} else {
+		buflen = sizeof(staticbuf);
+	}
+
+	while(1){
+		buf[buflen-2] = '\0';
+		va_copy(cpy,ap);
+		vsnprintf(buf,buflen,fmt,cpy);
+		va_end(cpy);
+		if(buf[buflen-2]!='\0'){
+			if(buf!=staticbuf) s_free(buf);
+			buflen *= 2;
+			buf = s_malloc(buflen);
+			if(buf == NULL) return NULL;
+			continue;
+		}
+		break;
+	}
+	t = sdscat(s,buf);
+	if(buf != staticbuf) s_free(buf);
+	return t;
+}
